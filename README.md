@@ -2,6 +2,12 @@
 
 A SwiftUI view modifier that provides pinch to zoom, double tap to zoom, and drag to pan functionalities.
 
+
+
+https://github.com/ryohey/Zoomable/assets/5355966/d88a9290-ee1d-4dd9-ac2c-b1e68548d256
+
+
+
 ## Features
 
 - Pinch to zoom

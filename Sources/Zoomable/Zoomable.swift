@@ -5,31 +5,44 @@ import SwiftUI
 struct ZoomableModifier: ViewModifier {
     let minZoomScale: CGFloat
     let doubleTapZoomScale: CGFloat
+    let outOfBoundsColor: Color
 
     @State private var lastTransform: CGAffineTransform = .identity
     @State private var transform: CGAffineTransform = .identity
     @State private var imageSize: CGSize = .zero
 
     func body(content: Content) -> some View {
-        content
-            .background(alignment: .topLeading) {
-                GeometryReader { proxy in
-                    Color.clear
-                        .onAppear {
-                            imageSize = proxy.size
+        
+        GeometryReader { proxy in
+            
+            ZStack {
+                
+                outOfBoundsColor
+                
+                content
+                    .background(alignment: .topLeading) {
+                        GeometryReader { proxy in
+                            Color.clear
+                                .onAppear {
+                                    imageSize = proxy.size
+                                }
                         }
-                }
+                    }
+                    .animatableTransformEffect(transform)
+                    .gesture(dragGesture, including: transform == .identity ? .none : .all)
+                    .modify { view in
+                        if #available(iOS 17.0, *) {
+                            view.gesture(magnificationGesture)
+                        } else {
+                            view.gesture(oldMagnificationGesture)
+                        }
+                    }
+                    .gesture(doubleTapGesture)
+                
             }
-            .animatableTransformEffect(transform)
-            .gesture(dragGesture, including: transform == .identity ? .none : .all)
-            .modify { view in
-                if #available(iOS 17.0, *) {
-                    view.gesture(magnificationGesture)
-                } else {
-                    view.gesture(oldMagnificationGesture)
-                }
-            }
-            .gesture(doubleTapGesture)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .edgesIgnoringSafeArea(.all)
     }
 
     @available(iOS, introduced: 16.0, deprecated: 17.0)
@@ -138,11 +151,13 @@ public extension View {
     @ViewBuilder
     func zoomable(
         minZoomScale: CGFloat = 1,
-        doubleTapZoomScale: CGFloat = 3
+        doubleTapZoomScale: CGFloat = 3,
+        outOfBoundsColor: Color = .clear
     ) -> some View {
         modifier(ZoomableModifier(
             minZoomScale: minZoomScale,
-            doubleTapZoomScale: doubleTapZoomScale
+            doubleTapZoomScale: doubleTapZoomScale,
+            outOfBoundsColor: outOfBoundsColor
         ))
     }
 }

@@ -38,11 +38,8 @@ struct ZoomableModifier: ViewModifier {
                         }
                     }
                     .gesture(doubleTapGesture)
-                
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .edgesIgnoringSafeArea(.all)
     }
 
     @available(iOS, introduced: 16.0, deprecated: 17.0)

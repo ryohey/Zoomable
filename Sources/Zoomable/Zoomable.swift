@@ -8,7 +8,7 @@ struct ZoomableModifier: ViewModifier {
 
     @State private var lastTransform: CGAffineTransform = .identity
     @State private var transform: CGAffineTransform = .identity
-    @State private var imageSize: CGSize = .zero
+    @State private var contentSize: CGSize = .zero
 
     func body(content: Content) -> some View {
         content
@@ -16,7 +16,7 @@ struct ZoomableModifier: ViewModifier {
                 GeometryReader { proxy in
                     Color.clear
                         .onAppear {
-                            imageSize = proxy.size
+                            contentSize = proxy.size
                         }
                 }
             }
@@ -51,7 +51,7 @@ struct ZoomableModifier: ViewModifier {
             .onChanged { value in
                 let newTransform = CGAffineTransform.anchoredScale(
                     scale: value.magnification,
-                    anchor: value.startAnchor.scaledBy(imageSize)
+                    anchor: value.startAnchor.scaledBy(contentSize)
                 )
 
                 withAnimation(.interactiveSpring) {
@@ -114,8 +114,8 @@ struct ZoomableModifier: ViewModifier {
             return .identity
         }
 
-        let maxX = imageSize.width * (scaleX - 1)
-        let maxY = imageSize.height * (scaleY - 1)
+        let maxX = contentSize.width * (scaleX - 1)
+        let maxY = contentSize.height * (scaleY - 1)
 
         if transform.tx > 0
             || transform.tx < -maxX
@@ -144,6 +144,23 @@ public extension View {
             minZoomScale: minZoomScale,
             doubleTapZoomScale: doubleTapZoomScale
         ))
+    }
+
+    @ViewBuilder
+    func zoomable(
+        minZoomScale: CGFloat = 1,
+        doubleTapZoomScale: CGFloat = 3,
+        outOfBoundsColor: Color = .clear
+    ) -> some View {
+        GeometryReader { proxy in
+            ZStack {
+                outOfBoundsColor
+                self.zoomable(
+                    minZoomScale: minZoomScale,
+                    doubleTapZoomScale: doubleTapZoomScale
+                )
+            }
+        }
     }
 }
 

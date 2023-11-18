@@ -1,7 +1,8 @@
 # Zoomable
 
-A SwiftUI view modifier that provides pinch to zoom, double tap to zoom, and drag to pan functionalities.
+A SwiftUI view modifier that provides pinch to zoom, double tap to zoom, and drag to pan functionalities for iOS ad iPadOS apps.
 
+Supports Image and any kind of View, including `UIViewControllerRepresentable` and `UIViewRepresentable`.
 
 
 https://github.com/ryohey/Zoomable/assets/5355966/d88a9290-ee1d-4dd9-ac2c-b1e68548d256
@@ -29,12 +30,22 @@ https://github.com/ryohey/Zoomable.git
 To use the `Zoomable` modifier in your SwiftUI view:
 
 ```swift
-import YourLibraryName
+import Zoomable
 
 struct ContentView: View {
     var body: some View {
         Image("your-image-name")
             .zoomable()
+
+        /*
+        or
+        SomeView()
+            .zoomable(
+                minZoomScale: 0.5,        // Default value: 1
+                doubleTapZoomScale: 2,    // Default value: 3
+                outOfBoundsColor: .black  // Default value: .clear
+            )
+        */
     }
 }
 ```

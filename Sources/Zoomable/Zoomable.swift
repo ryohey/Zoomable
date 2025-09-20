@@ -5,6 +5,7 @@ import SwiftUI
 struct ZoomableModifier: ViewModifier {
     let minZoomScale: CGFloat
     let doubleTapZoomScale: CGFloat
+    let maxZoomScale: CGFloat?
 
     @State private var lastTransform: CGAffineTransform = .identity
     @State private var transform: CGAffineTransform = .identity
@@ -77,6 +78,8 @@ struct ZoomableModifier: ViewModifier {
                     transform = newTransform
                     lastTransform = newTransform
                 }
+
+                onEndGesture()
             }
     }
 
@@ -85,8 +88,8 @@ struct ZoomableModifier: ViewModifier {
             .onChanged { value in
                 withAnimation(.interactiveSpring) {
                     transform = lastTransform.translatedBy(
-                        x: value.translation.width / transform.scaleX,
-                        y: value.translation.height / transform.scaleY
+                        x: value.translation.width / max(transform.scaleX, .leastNonzeroMagnitude),
+                        y: value.translation.height / max(transform.scaleY, .leastNonzeroMagnitude)
                     )
                 }
             }
@@ -108,29 +111,36 @@ struct ZoomableModifier: ViewModifier {
         let scaleX = transform.scaleX
         let scaleY = transform.scaleY
 
-        if scaleX < minZoomScale
-            || scaleY < minZoomScale
-        {
+        if scaleX < minZoomScale || scaleY < minZoomScale {
             return .identity
         }
 
-        let maxX = contentSize.width * (scaleX - 1)
-        let maxY = contentSize.height * (scaleY - 1)
+        var capped = transform
 
-        if transform.tx > 0
-            || transform.tx < -maxX
-            || transform.ty > 0
-            || transform.ty < -maxY
-        {
-            let tx = min(max(transform.tx, -maxX), 0)
-            let ty = min(max(transform.ty, -maxY), 0)
-            var transform = transform
-            transform.tx = tx
-            transform.ty = ty
-            return transform
+        if let maxScale = maxZoomScale {
+            let currentScale = max(scaleX, scaleY)
+            if currentScale > maxScale {
+                let factor = maxScale / currentScale
+                let contentCenter = CGPoint(x: contentSize.width / 2, y: contentSize.height / 2)
+                let capTransform = CGAffineTransform.anchoredScale(scale: factor, anchor: contentCenter)
+                capped = capped.concatenating(capTransform)
+            }
         }
 
-        return transform
+        let finalScaleX = capped.scaleX
+        let finalScaleY = capped.scaleY
+
+        let maxX = contentSize.width * (finalScaleX - 1)
+        let maxY = contentSize.height * (finalScaleY - 1)
+
+        if capped.tx > 0 || capped.tx < -maxX || capped.ty > 0 || capped.ty < -maxY {
+            let tx = min(max(capped.tx, -maxX), 0)
+            let ty = min(max(capped.ty, -maxY), 0)
+            capped.tx = tx
+            capped.ty = ty
+        }
+
+        return capped
     }
 }
 
@@ -142,7 +152,21 @@ public extension View {
     ) -> some View {
         modifier(ZoomableModifier(
             minZoomScale: minZoomScale,
-            doubleTapZoomScale: doubleTapZoomScale
+            doubleTapZoomScale: doubleTapZoomScale,
+            maxZoomScale: nil
+        ))
+    }
+
+    @ViewBuilder
+    func zoomable(
+        minZoomScale: CGFloat = 1,
+        doubleTapZoomScale: CGFloat = 3,
+        maxZoomScale: CGFloat
+    ) -> some View {
+        modifier(ZoomableModifier(
+            minZoomScale: minZoomScale,
+            doubleTapZoomScale: doubleTapZoomScale,
+            maxZoomScale: maxZoomScale
         ))
     }
 
@@ -152,7 +176,7 @@ public extension View {
         doubleTapZoomScale: CGFloat = 3,
         outOfBoundsColor: Color = .clear
     ) -> some View {
-        GeometryReader { proxy in
+        GeometryReader { _ in
             ZStack {
                 outOfBoundsColor
                 self.zoomable(

@@ -117,21 +117,18 @@ struct ZoomableModifier: ViewModifier {
 
         var capped = transform
 
-        if let maxScale = maxZoomScale {
+        if let maxZoomScale {
             let currentScale = max(scaleX, scaleY)
-            if currentScale > maxScale {
-                let factor = maxScale / currentScale
+            if currentScale > maxZoomScale {
+                let factor = maxZoomScale / currentScale
                 let contentCenter = CGPoint(x: contentSize.width / 2, y: contentSize.height / 2)
                 let capTransform = CGAffineTransform.anchoredScale(scale: factor, anchor: contentCenter)
                 capped = capped.concatenating(capTransform)
             }
         }
 
-        let finalScaleX = capped.scaleX
-        let finalScaleY = capped.scaleY
-
-        let maxX = contentSize.width * (finalScaleX - 1)
-        let maxY = contentSize.height * (finalScaleY - 1)
+        let maxX = contentSize.width * (capped.scaleX - 1)
+        let maxY = contentSize.height * (capped.scaleY - 1)
 
         if capped.tx > 0 || capped.tx < -maxX || capped.ty > 0 || capped.ty < -maxY {
             let tx = min(max(capped.tx, -maxX), 0)

@@ -4,8 +4,8 @@ import SwiftUI
 
 struct ZoomableModifier: ViewModifier {
     let minZoomScale: CGFloat
-    let doubleTapZoomScale: CGFloat
     let maxZoomScale: CGFloat?
+    let doubleTapZoomScale: CGFloat?
 
     @State private var lastTransform: CGAffineTransform = .identity
     @State private var transform: CGAffineTransform = .identity
@@ -30,7 +30,13 @@ struct ZoomableModifier: ViewModifier {
                     view.gesture(oldMagnificationGesture)
                 }
             }
-            .gesture(doubleTapGesture)
+            .modify { view in
+                if let doubleTapZoomScale {
+                    view.gesture(doubleTapGesture(doubleTapZoomScale))
+                } else {
+                    view
+                }
+            }
     }
 
     @available(iOS, introduced: 16.0, deprecated: 17.0)
@@ -64,12 +70,12 @@ struct ZoomableModifier: ViewModifier {
             }
     }
 
-    private var doubleTapGesture: some Gesture {
+    private func doubleTapGesture(_ zoomScale: CGFloat) -> some Gesture {
         SpatialTapGesture(count: 2)
             .onEnded { value in
                 let newTransform: CGAffineTransform =
                     if transform.isIdentity {
-                        .anchoredScale(scale: doubleTapZoomScale, anchor: value.location)
+                        .anchoredScale(scale: zoomScale, anchor: value.location)
                     } else {
                         .identity
                     }
@@ -145,32 +151,21 @@ public extension View {
     @ViewBuilder
     func zoomable(
         minZoomScale: CGFloat = 1,
-        doubleTapZoomScale: CGFloat = 3
+        maxZoomScale: CGFloat? = nil,
+        doubleTapZoomScale: CGFloat? = 3
     ) -> some View {
         modifier(ZoomableModifier(
             minZoomScale: minZoomScale,
-            doubleTapZoomScale: doubleTapZoomScale,
-            maxZoomScale: nil
+            maxZoomScale: maxZoomScale,
+            doubleTapZoomScale: doubleTapZoomScale
         ))
     }
 
     @ViewBuilder
     func zoomable(
         minZoomScale: CGFloat = 1,
-        doubleTapZoomScale: CGFloat = 3,
-        maxZoomScale: CGFloat
-    ) -> some View {
-        modifier(ZoomableModifier(
-            minZoomScale: minZoomScale,
-            doubleTapZoomScale: doubleTapZoomScale,
-            maxZoomScale: maxZoomScale
-        ))
-    }
-
-    @ViewBuilder
-    func zoomable(
-        minZoomScale: CGFloat = 1,
-        doubleTapZoomScale: CGFloat = 3,
+        maxZoomScale: CGFloat? = nil,
+        doubleTapZoomScale: CGFloat? = 3,
         outOfBoundsColor: Color = .clear
     ) -> some View {
         GeometryReader { _ in
@@ -178,6 +173,7 @@ public extension View {
                 outOfBoundsColor
                 self.zoomable(
                     minZoomScale: minZoomScale,
+                    maxZoomScale: maxZoomScale,
                     doubleTapZoomScale: doubleTapZoomScale
                 )
             }

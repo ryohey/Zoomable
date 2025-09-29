@@ -1,5 +1,3 @@
-#if os(iOS)
-
 import SwiftUI
 
 struct ZoomableModifier: ViewModifier {
@@ -222,5 +220,3 @@ private extension CGAffineTransform {
         sqrt(b * b + d * d)
     }
 }
-
-#endif

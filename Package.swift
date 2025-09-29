@@ -7,6 +7,7 @@ let package = Package(
     name: "Zoomable",
     platforms: [
         .iOS(.v16),
+        .macOS(.v14),
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.

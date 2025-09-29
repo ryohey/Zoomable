@@ -53,6 +53,7 @@ struct ContentView: View {
 ## Requirements
 
 - iOS 16.0 or later
+- MacOS 14.0 or later
 - SwiftUI
 
 ## Caveats

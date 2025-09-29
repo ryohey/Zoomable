@@ -1,5 +1,3 @@
-#if os(iOS)
-
 import SwiftUI
 
 struct ZoomableModifier: ViewModifier {
@@ -22,7 +20,10 @@ struct ZoomableModifier: ViewModifier {
                 }
             }
             .animatableTransformEffect(transform)
-            .gesture(dragGesture, including: transform == .identity ? .none : .all)
+            .gesture(
+                dragGesture,
+                including: transform == .identity ? .none : .all
+            )
             .modify { view in
                 if #available(iOS 17.0, *) {
                     view.gesture(magnificationGesture)
@@ -94,8 +95,10 @@ struct ZoomableModifier: ViewModifier {
             .onChanged { value in
                 withAnimation(.interactiveSpring) {
                     transform = lastTransform.translatedBy(
-                        x: value.translation.width / max(transform.scaleX, .leastNonzeroMagnitude),
-                        y: value.translation.height / max(transform.scaleY, .leastNonzeroMagnitude)
+                        x: value.translation.width
+                            / max(transform.scaleX, .leastNonzeroMagnitude),
+                        y: value.translation.height
+                            / max(transform.scaleY, .leastNonzeroMagnitude)
                     )
                 }
             }
@@ -113,7 +116,9 @@ struct ZoomableModifier: ViewModifier {
         }
     }
 
-    private func limitTransform(_ transform: CGAffineTransform) -> CGAffineTransform {
+    private func limitTransform(
+        _ transform: CGAffineTransform
+    ) -> CGAffineTransform {
         let scaleX = transform.scaleX
         let scaleY = transform.scaleY
 
@@ -127,8 +132,14 @@ struct ZoomableModifier: ViewModifier {
             let currentScale = max(scaleX, scaleY)
             if currentScale > maxZoomScale {
                 let factor = maxZoomScale / currentScale
-                let contentCenter = CGPoint(x: contentSize.width / 2, y: contentSize.height / 2)
-                let capTransform = CGAffineTransform.anchoredScale(scale: factor, anchor: contentCenter)
+                let contentCenter = CGPoint(
+                    x: contentSize.width / 2,
+                    y: contentSize.height / 2
+                )
+                let capTransform = CGAffineTransform.anchoredScale(
+                    scale: factor,
+                    anchor: contentCenter
+                )
                 capped = capped.concatenating(capTransform)
             }
         }
@@ -136,7 +147,11 @@ struct ZoomableModifier: ViewModifier {
         let maxX = contentSize.width * (capped.scaleX - 1)
         let maxY = contentSize.height * (capped.scaleY - 1)
 
-        if capped.tx > 0 || capped.tx < -maxX || capped.ty > 0 || capped.ty < -maxY {
+        if capped.tx > 0
+            || capped.tx < -maxX
+            || capped.ty > 0
+            || capped.ty < -maxY
+        {
             let tx = min(max(capped.tx, -maxX), 0)
             let ty = min(max(capped.ty, -maxY), 0)
             capped.tx = tx
@@ -147,22 +162,24 @@ struct ZoomableModifier: ViewModifier {
     }
 }
 
-public extension View {
+extension View {
     @ViewBuilder
-    func zoomable(
+    public func zoomable(
         minZoomScale: CGFloat = 1,
         maxZoomScale: CGFloat? = nil,
         doubleTapZoomScale: CGFloat? = 3
     ) -> some View {
-        modifier(ZoomableModifier(
-            minZoomScale: minZoomScale,
-            maxZoomScale: maxZoomScale,
-            doubleTapZoomScale: doubleTapZoomScale
-        ))
+        modifier(
+            ZoomableModifier(
+                minZoomScale: minZoomScale,
+                maxZoomScale: maxZoomScale,
+                doubleTapZoomScale: doubleTapZoomScale
+            )
+        )
     }
 
     @ViewBuilder
-    func zoomable(
+    public func zoomable(
         minZoomScale: CGFloat = 1,
         maxZoomScale: CGFloat? = nil,
         doubleTapZoomScale: CGFloat? = 3,
@@ -181,14 +198,18 @@ public extension View {
     }
 }
 
-private extension View {
+extension View {
     @ViewBuilder
-    func modify(@ViewBuilder _ fn: (Self) -> some View) -> some View {
+    fileprivate func modify(
+        @ViewBuilder _ fn: (Self) -> some View
+    ) -> some View {
         fn(self)
     }
 
     @ViewBuilder
-    func animatableTransformEffect(_ transform: CGAffineTransform) -> some View {
+    fileprivate func animatableTransformEffect(
+        _ transform: CGAffineTransform
+    ) -> some View {
         scaleEffect(
             x: transform.scaleX,
             y: transform.scaleY,
@@ -198,8 +219,8 @@ private extension View {
     }
 }
 
-private extension UnitPoint {
-    func scaledBy(_ size: CGSize) -> CGPoint {
+extension UnitPoint {
+    fileprivate func scaledBy(_ size: CGSize) -> CGPoint {
         .init(
             x: x * size.width,
             y: y * size.height
@@ -207,20 +228,21 @@ private extension UnitPoint {
     }
 }
 
-private extension CGAffineTransform {
-    static func anchoredScale(scale: CGFloat, anchor: CGPoint) -> CGAffineTransform {
+extension CGAffineTransform {
+    fileprivate static func anchoredScale(
+        scale: CGFloat,
+        anchor: CGPoint
+    ) -> CGAffineTransform {
         CGAffineTransform(translationX: anchor.x, y: anchor.y)
             .scaledBy(x: scale, y: scale)
             .translatedBy(x: -anchor.x, y: -anchor.y)
     }
 
-    var scaleX: CGFloat {
+    fileprivate var scaleX: CGFloat {
         sqrt(a * a + c * c)
     }
 
-    var scaleY: CGFloat {
+    fileprivate var scaleY: CGFloat {
         sqrt(b * b + d * d)
     }
 }
-
-#endif
